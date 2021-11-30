@@ -9,10 +9,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "-f", "--filename", help="filename, in case you want to save the animation")
 
-    args = parser.parse_args()
-    if args.mode == "velocity_obstacle":
-        velocity_obstacle.simulate(args.filename)
-    elif args.mode == "nmpc":
-        nmpc.simulate(args.filename)
-    else:
-        print("Please enter mode the desired mode: velocity_obstacle or nmpc")
+    # args = parser.parse_args()
+    # print(args)
+    # if args.mode == "velocity_obstacle":
+    #     velocity_obstacle.simulate(args.filename)
+    # elif args.mode == "nmpc":
+    #     nmpc.simulate(args.filename)
+    # else:
+    #     print("Please enter mode the desired mode: velocity_obstacle or nmpc")
+    velocity_obstacle.simulate('velocity_obstacle/velocity_obstacle.avi')

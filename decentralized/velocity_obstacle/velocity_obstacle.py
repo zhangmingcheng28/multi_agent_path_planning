@@ -4,10 +4,11 @@ Collision avoidance using Velocity-obstacle method
 author: Ashwin Bose (atb033@github.com)
 """
 
-from utils.multi_robot_plot import plot_robot_and_obstacles
-from utils.create_obstacles import create_obstacles
 from utils.control import compute_desired_velocity
+from utils.create_obstacles import create_obstacles
+from utils.multi_robot_plot import plot_robot_and_obstacles
 import numpy as np
+
 
 SIM_TIME = 5.
 TIMESTEP = 0.1
@@ -27,27 +28,25 @@ def simulate(filename):
     robot_state_history = np.empty((4, NUMBER_OF_TIMESTEPS))
     for i in range(NUMBER_OF_TIMESTEPS):
         v_desired = compute_desired_velocity(robot_state, goal, ROBOT_RADIUS, VMAX)
-        control_vel = compute_velocity(
-            robot_state, obstacles[:, i, :], v_desired)
+        control_vel = compute_velocity(robot_state, obstacles[:, i, :], v_desired)
         robot_state = update_state(robot_state, control_vel)
         robot_state_history[:4, i] = robot_state
 
-    plot_robot_and_obstacles(
-        robot_state_history, obstacles, ROBOT_RADIUS, NUMBER_OF_TIMESTEPS, SIM_TIME, filename)
+    plot_robot_and_obstacles(robot_state_history, obstacles, ROBOT_RADIUS, NUMBER_OF_TIMESTEPS, SIM_TIME, filename)
 
 
 def compute_velocity(robot, obstacles, v_desired):
-    pA = robot[:2]
-    vA = robot[-2:]
+    pA = robot[:2]  # take the first 2 element of the array
+    vA = robot[-2:]  # take the last 2 element of the array
     # Compute the constraints
     # for each velocity obstacles
     number_of_obstacles = np.shape(obstacles)[1]
     Amat = np.empty((number_of_obstacles * 2, 2))
     bvec = np.empty((number_of_obstacles * 2))
-    for i in range(number_of_obstacles):
-        obstacle = obstacles[:, i]
-        pB = obstacle[:2]
-        vB = obstacle[2:]
+    for i in range(number_of_obstacles):  # compute velocity obstacles for each obstacles/robots
+        obstacle = obstacles[:, i]  # "obstacles" each column is represented as a robot, this is to get the first column
+        pB = obstacle[:2]  # first two element of the column
+        vB = obstacle[2:]  # last two element of the column
         dispBA = pA - pB
         distBA = np.linalg.norm(dispBA)
         thetaBA = np.arctan2(dispBA[1], dispBA[0])
@@ -111,7 +110,7 @@ def create_constraints(translation, angle, side):
     # create line
     origin = np.array([0, 0, 1])
     point = np.array([np.cos(angle), np.sin(angle)])
-    line = np.cross(origin, point)
+    line = np.cross(origin, point)  # for cross product, if the vector do not have enough dimensions, the vector with lessor dimension will be automatically filled with an zero.
     line = translate_line(line, translation)
 
     if side == "left":
@@ -125,7 +124,9 @@ def create_constraints(translation, angle, side):
 
 def translate_line(line, translation):
     matrix = np.eye(3)
-    matrix[2, :2] = -translation[:2]
+    matrix[2, :2] = -translation[:2]  # [:2] is to get the first two element, and at least get first two element, if there are only two element, we just get the two element
+    # matrix[2,:] is to get the third row of the array "matrix", [2,:3]
+    #
     return matrix @ line
 
 
