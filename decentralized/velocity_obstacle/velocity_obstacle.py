@@ -3,7 +3,8 @@ Collision avoidance using Velocity-obstacle method
 
 author: Ashwin Bose (atb033@github.com)
 """
-
+import sys
+sys.path.append('D:\multi_agent_path_planning\decentralized')
 from utils.control import compute_desired_velocity
 from utils.create_obstacles import create_obstacles
 from utils.multi_robot_plot import plot_robot_and_obstacles
@@ -58,33 +59,32 @@ def compute_velocity(robot, obstacles, v_desired):
 
         # VO
         translation = vB
-        Atemp, btemp = create_constraints(translation, phi_left, "left")
+        Atemp, btemp = create_constraints(translation, phi_left, "left")  # the line extend from left
         Amat[i*2, :] = Atemp
         bvec[i*2] = btemp
-        Atemp, btemp = create_constraints(translation, phi_right, "right")
+        Atemp, btemp = create_constraints(translation, phi_right, "right")  # the line extend from right
         Amat[i*2 + 1, :] = Atemp
         bvec[i*2 + 1] = btemp
 
-    # Create search-space
-    th = np.linspace(0, 2*np.pi, 20)
-    vel = np.linspace(0, VMAX, 5)
+    # Create search-space, combination of theta with speed will form the combined search space
+    th = np.linspace(0, 2*np.pi, 20)  # create search space of  theta
+    vel = np.linspace(0, VMAX, 5)  # create search space of Speed
 
     vv, thth = np.meshgrid(vel, th)
 
     vx_sample = (vv * np.cos(thth)).flatten()
     vy_sample = (vv * np.sin(thth)).flatten()
 
-    v_sample = np.stack((vx_sample, vy_sample))
+    v_sample = np.stack((vx_sample, vy_sample))  # sample 100 velocities
 
     v_satisfying_constraints = check_constraints(v_sample, Amat, bvec)
 
     # Objective function
     size = np.shape(v_satisfying_constraints)[1]
-    diffs = v_satisfying_constraints - \
-        ((v_desired).reshape(2, 1) @ np.ones(size).reshape(1, size))
+    diffs = v_satisfying_constraints - ((v_desired).reshape(2, 1) @ np.ones(size).reshape(1, size))
     norm = np.linalg.norm(diffs, axis=0)
     min_index = np.where(norm == np.amin(norm))[0][0]
-    cmd_vel = (v_satisfying_constraints[:, min_index])
+    cmd_vel = (v_satisfying_constraints[:, min_index])  # identify the velocity (from the admissiable velocity pool) that has the smallest difference from the reference velocity at each time-step.
 
     return cmd_vel
 
@@ -109,12 +109,13 @@ def check_inside(v, Amat, bvec):
 def create_constraints(translation, angle, side):
     # create line
     origin = np.array([0, 0, 1])
-    point = np.array([np.cos(angle), np.sin(angle)])
+    point = np.array([np.cos(angle), np.sin(angle)])  # unit vector in both x and y direction
+    # when use {0,0,1} cross product with a unit vector, the result will produce {-np.sin(angle), np.cos(angle), 0}
     line = np.cross(origin, point)  # for cross product, if the vector do not have enough dimensions, the vector with lessor dimension will be automatically filled with an zero.
-    line = translate_line(line, translation)
+    line = translate_line(line, translation)  #
 
     if side == "left":
-        line *= -1
+        line *= -1  # line = line + -1
 
     A = line[:2]
     b = -line[2]
@@ -125,8 +126,8 @@ def create_constraints(translation, angle, side):
 def translate_line(line, translation):
     matrix = np.eye(3)
     matrix[2, :2] = -translation[:2]  # [:2] is to get the first two element, and at least get first two element, if there are only two element, we just get the two element
-    # matrix[2,:] is to get the third row of the array "matrix", [2,:3]
-    #
+    # matrix[2,:] is to get the third row of the array "matrix", and :2 mean 2 columns
+    # @ sign is the matrix multiplication
     return matrix @ line
 
 
